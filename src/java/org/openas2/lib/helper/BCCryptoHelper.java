@@ -28,7 +28,7 @@ import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMultipart;
 
 import org.bouncycastle.cms.CMSException;
-import org.bouncycastle.cms.RecipientId;
+import org.bouncycastle.cms.KeyTransRecipientId;
 import org.bouncycastle.cms.RecipientInformation;
 import org.bouncycastle.cms.SignerInformation;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -39,6 +39,7 @@ import org.bouncycastle.mail.smime.SMIMESigned;
 import org.bouncycastle.mail.smime.SMIMESignedGenerator;
 import org.bouncycastle.mail.smime.SMIMEUtil;
 import org.bouncycastle.util.encoders.Base64;
+import org.bouncycastle.asn1.x500.X500Name;
 import org.openas2.lib.util.IOUtil;
 
 public class BCCryptoHelper implements ICryptoHelper {
@@ -113,10 +114,11 @@ public class BCCryptoHelper implements ICryptoHelper {
         // Parse the MIME body into an SMIME envelope object
         SMIMEEnveloped envelope = new SMIMEEnveloped(part);
 
+        X500Name xnPrincipal = new X500Name(new String(x509Cert.getIssuerX500Principal().getEncoded()));
         // Get the recipient object for decryption
-        RecipientId recId = new RecipientId();
-        recId.setSerialNumber(x509Cert.getSerialNumber());
-        recId.setIssuer(x509Cert.getIssuerX500Principal().getEncoded());
+        KeyTransRecipientId recId =
+          new KeyTransRecipientId(xnPrincipal,
+                                  x509Cert.getSerialNumber());
 
         RecipientInformation recipient = envelope.getRecipientInfos().get(recId);
 
