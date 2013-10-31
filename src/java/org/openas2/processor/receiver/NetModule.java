@@ -2,6 +2,7 @@ package org.openas2.processor.receiver;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.PrintStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -24,8 +25,8 @@ public abstract class NetModule extends BaseReceiverModule {
     public static final String PARAM_PORT = "port";
     public static final String PARAM_ERROR_DIRECTORY = "errordir";
     public static final String PARAM_ERRORS = "errors";
-    public static final String DEFAULT_ERRORS = "$date.yyyyMMddhhmmss$"; 
-    
+  public static final String DEFAULT_ERRORS = "$date.yyyyMMddhhmmss$";
+
     private MainThread mainThread;
 
     public void doStart() throws OpenAS2Exception {
@@ -52,7 +53,7 @@ public abstract class NetModule extends BaseReceiverModule {
 
     protected abstract NetModuleHandler getHandler();
 
-    protected void handleError(Message msg, OpenAS2Exception oae) {
+  protected void handleError(Message msg, OpenAS2Exception oae) {
         oae.addSource(OpenAS2Exception.SOURCE_MESSAGE, msg);
         oae.terminate();
 
@@ -63,13 +64,16 @@ public abstract class NetModule extends BaseReceiverModule {
 
         	String name = params.format(getParameter(PARAM_ERRORS, DEFAULT_ERRORS));
         	String directory = getParameter(PARAM_ERROR_DIRECTORY, true);
-        	
+
             File msgFile = IOUtilOld.getUnique(IOUtilOld.getDirectoryFile(directory),
             						IOUtilOld.cleanFilename(name));
             String msgText = msg.toString();
             FileOutputStream fOut = new FileOutputStream(msgFile);
 
             fOut.write(msgText.getBytes());
+            PrintStream fOutPrint = new PrintStream(fOut);
+            oae.printStackTrace(fOutPrint);
+            fOutPrint.close();
             fOut.close();
 
             // make sure an error of this event is logged
@@ -185,7 +189,7 @@ public abstract class NetModule extends BaseReceiverModule {
             System.out.println("exited");
         }
 
-        
+
         public void terminate() {
             setTerminated(true);
         }
