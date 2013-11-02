@@ -114,7 +114,7 @@ public class BCCryptoHelper implements ICryptoHelper {
         // Parse the MIME body into an SMIME envelope object
         SMIMEEnveloped envelope = new SMIMEEnveloped(part);
 
-        X500Name xnPrincipal = new X500Name(new String(x509Cert.getIssuerX500Principal().getEncoded()));
+        X500Name xnPrincipal = new X500Name(x509Cert.getIssuerX500Principal().getName());
         // Get the recipient object for decryption
         KeyTransRecipientId recId =
           new KeyTransRecipientId(xnPrincipal,
