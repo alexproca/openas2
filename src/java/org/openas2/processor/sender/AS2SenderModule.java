@@ -387,37 +387,37 @@ public class AS2SenderModule extends HttpSenderModule {
         if (receiptOption != null) {
             conn.setRequestProperty("Receipt-delivery-option", receiptOption);
         }
-        
+
         //As of 2007-06-01
-        
+
         String contentDisp = msg.getContentDisposition();
         if (contentDisp != null) {
         	conn.setRequestProperty("Content-Disposition", contentDisp);
         }
-        
+
     }
-  
-    
+
+
     //Asynch MDN  2007-03-12
-    /** 
+    /**
      * for storing original mic & outgoing file into pending information file
      * @param msg AS2Message
-     * @param mic  
-     * @throws WrappedException 
+     * @param mic
+     * @throws WrappedException
      */
     protected void storePendingInfo(AS2Message msg, String mic) throws WrappedException {
 		try {
-			
-			
-			
+
+
+
 			String pendingFolder = (String) getSession().getComponent("processor").getParameters().get("pendingmdninfo");
-			
+
 
 			FileOutputStream fos = new FileOutputStream(
 					pendingFolder + "/"
-               			+ msg.getMessageID().substring(1,
-							msg.getMessageID().length() - 1));
-			fos.write((mic + "\n").getBytes());
+                                        + msg.getMessageID());
+
+                        fos.write((mic + "\n").getBytes());
 			logger.debug("Original MIC is : " + mic+msg.getLoggingText());
 
 			// input pending folder & original outgoing file name to get and
