@@ -266,6 +266,8 @@ public class AS2SenderModule extends HttpSenderModule {
                 }
             }
         } catch (Exception e) {
+            logger.info(e.toString());
+
             if (e instanceof IOException) {
                 throw (IOException) e;
             }
