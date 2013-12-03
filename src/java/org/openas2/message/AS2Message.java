@@ -18,12 +18,12 @@ public class AS2Message extends BaseMessage implements Message {
     }
 
     public String generateMessageID() {
-    	CompositeParameters params = 
+    	CompositeParameters params =
     		new CompositeParameters(false).
     			add("date", new DateParameters()).
     			add("msg", new MessageParameters(this)).
     			add("rand", new RandomParameters());
-        
+
     	String idFormat = getPartnership().getAttribute(AS2Partnership.PA_MESSAGEID);
     	if (idFormat == null) {
     		idFormat = "OPENAS2-$date.ddMMyyyyHHmmssZ$-$rand.1234$@$msg.sender.as2_id$_$msg.receiver.as2_id$";
@@ -40,7 +40,19 @@ public class AS2Message extends BaseMessage implements Message {
         return messageId.toString();
     }
 
+    private static java.util.regex.Pattern MDNMatcher =
+        java.util.regex.Pattern.compile(
+            "^multipart/report;.*report-type=disposition-notification");
+
+    // Is this message itself an MDN?
+    public boolean isMDN() {
+        return MDNMatcher.matcher(getContentType()).find();
+    }
+
     public boolean isRequestingMDN() {
+        // MDN must never be sent in response to an MDN
+        if(isMDN()) { return false; }
+
         Partnership p = getPartnership();
         boolean requesting = ((p.getAttribute(AS2Partnership.PA_AS2_MDN_TO) != null) || (p
                 .getAttribute(AS2Partnership.PA_AS2_MDN_OPTIONS) != null));
@@ -48,18 +60,22 @@ public class AS2Message extends BaseMessage implements Message {
 
         return requesting || requested;
     }
+
     public boolean isRequestingAsynchMDN() {
+        // MDN must never be sent in response to an MDN
+        if(isMDN()) { return false; }
+
         Partnership p = getPartnership();
-        boolean requesting = ((p.getAttribute(AS2Partnership.PA_AS2_MDN_TO) != null || 
+        boolean requesting = ((p.getAttribute(AS2Partnership.PA_AS2_MDN_TO) != null ||
         		p.getAttribute(AS2Partnership.PA_AS2_MDN_OPTIONS) != null)
         		&& p.getAttribute(AS2Partnership.PA_AS2_RECEIPT_OPTION) != null);
-        boolean requested = ((getHeader("Disposition-Notification-To") != null || 
+        boolean requested = ((getHeader("Disposition-Notification-To") != null ||
         		              (getHeader("Disposition-Notification-Options") != null))
         		    && (getHeader("Receipt-Delivery-Option") != null));
 
         return requesting || requested;
     }
-    
+
     public String getAsyncMDNurl() {
     	return getHeader("Receipt-Delivery-Option");
     }
