@@ -41,7 +41,7 @@ public class AS2ReceiverHandler implements NetModuleHandler {
 
 	private Log logger = LogFactory.getLog(AS2ReceiverHandler.class.getSimpleName());
 
-    
+
     public AS2ReceiverHandler(AS2ReceiverModule module) {
         super();
         this.module = module;
@@ -68,8 +68,8 @@ public class AS2ReceiverHandler implements NetModuleHandler {
         // Read in the message request, headers, and data
         try {
             data = HTTPUtil.readData(s, msg);
-            
-            
+
+
         } catch (Exception e) {
             NetException ne = new NetException(s.getInetAddress(), s.getPort(), e);
             ne.terminate();
@@ -208,22 +208,23 @@ public class AS2ReceiverHandler implements NetModuleHandler {
 
         if (!mdnBlocked) {
             try {
-            	
+
             	MessageMDN mdn = AS2UtilOld.createMDN(getModule().getSession(), msg, disposition, text);
 
                 BufferedOutputStream out;
               	out = new BufferedOutputStream(s.getOutputStream());
-                //if asyncMDN requested, close connection and initiate separate MDN send 
+                //if asyncMDN requested, close connection and initiate separate MDN send
                 if (msg.isRequestingAsynchMDN() ) {
                     HTTPUtil.sendHTTPResponse(out, HttpURLConnection.HTTP_OK, false);
-                	out.write("Content-Length: 0\r\n\r\n".getBytes()); 
+                	out.write("Content-Length: 0\r\n\r\n".getBytes());
                 	out.flush();
                 	out.close();
                 	logger.info("setup to send asynch MDN [" + disposition.toString() + "]"+getClientInfo(s)+msg.getLoggingText());
+
                     getModule().getSession().getProcessor().handle(SenderModule.DO_SENDMDN, msg, null);
                     return;
                 }
-                
+
                 //  otherwise, send sync MDN back on same connection
                 HTTPUtil.sendHTTPResponse(out, HttpURLConnection.HTTP_OK, true);
 
@@ -244,8 +245,8 @@ public class AS2ReceiverHandler implements NetModuleHandler {
                 }
 
                 out.write("\r\n".getBytes());
-                
- 
+
+
                 data.writeTo(out);
                 out.flush();
                 out.close();
@@ -254,13 +255,14 @@ public class AS2ReceiverHandler implements NetModuleHandler {
 				getModule().getSession().getProcessor().handle(StorageModule.DO_STOREMDN, msg, null);
                 logger.info("sent MDN [" + disposition.toString() + "]"+getClientInfo(s)+msg.getLoggingText());
             } catch (Exception e) {
+                logger.info("Error: " + e.toString());
                 WrappedException we = new WrappedException("Error sending MDN", e);
                 we.addSource(OpenAS2Exception.SOURCE_MESSAGE, msg);
                 we.terminate();
             }
         }
     }
-    
 
- 
+
+
 }
