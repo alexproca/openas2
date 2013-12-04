@@ -1,5 +1,7 @@
 package org.openas2.processor.receiver;
 
+import java.io.StringWriter;
+import java.io.PrintWriter;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.net.HttpURLConnection;
@@ -255,7 +257,11 @@ public class AS2ReceiverHandler implements NetModuleHandler {
 				getModule().getSession().getProcessor().handle(StorageModule.DO_STOREMDN, msg, null);
                 logger.info("sent MDN [" + disposition.toString() + "]"+getClientInfo(s)+msg.getLoggingText());
             } catch (Exception e) {
-                logger.info("Error: " + e.toString());
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                logger.info("Error: " + e.toString() + "\n" + sw.toString());
+
                 WrappedException we = new WrappedException("Error sending MDN", e);
                 we.addSource(OpenAS2Exception.SOURCE_MESSAGE, msg);
                 we.terminate();
