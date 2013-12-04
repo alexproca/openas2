@@ -28,7 +28,7 @@ import org.openas2.util.ProfilerStub;
 
 
 public class AsynchMDNSenderModule extends HttpSenderModule{
-   
+
 	private Log logger = LogFactory.getLog(AsynchMDNSenderModule.class.getSimpleName());
 
 	public boolean canHandle(String action, Message msg, Map options) {
@@ -39,11 +39,11 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 	        return (msg instanceof AS2Message);
 	    }
 	public void handle(String action, Message msg, Map options) throws OpenAS2Exception {
-		
-		
+
+
 		try {
 			sendAsyncMDN((AS2Message) msg, options);
-       
+
         } finally {
          		logger.debug("asynch mdn message sent");
         }
@@ -51,7 +51,7 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
     }
 
 	   protected void updateHttpHeaders(HttpURLConnection conn, Message msg) {
-	     
+
 	        conn.setRequestProperty("Connection", "close, TE");
 	        conn.setRequestProperty("User-Agent", "OpenAS2 AsynchMDNSender");
 
@@ -66,7 +66,7 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 	        conn.setRequestProperty("Subject", msg.getHeader("Subject"));
 	        conn.setRequestProperty("From",  msg.getHeader("From"));
 
-	        	        
+
 	    }
 	   private void sendAsyncMDN(AS2Message msg, Map options) throws OpenAS2Exception {
 
@@ -78,7 +78,7 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 
 			MessageMDN mdn = msg.getMDN();
 
-			//	Create a HTTP connection 
+			//	Create a HTTP connection
 			String url = msg.getAsyncMDNurl();
 			HttpURLConnection conn = getConnection(url, true, true, false,
 					"POST");
@@ -89,7 +89,7 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 
 				conn.setRequestProperty("Connection", "close, TE");
 				conn.setRequestProperty("User-Agent", "OpenAS2 AS2Sender");
-				//		    Copy all the header from mdn to the RequestProperties of conn 
+				//		    Copy all the header from mdn to the RequestProperties of conn
 				Enumeration headers = mdn.getHeaders().getAllHeaders();
 				Header header = null;
 				while (headers.hasMoreElements()) {
@@ -101,10 +101,10 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 					conn.setRequestProperty(header.getName(), headerValue);
 				}
 
-				//		    Note: closing this stream causes connection abort errors on some AS2 servers 
+				//		    Note: closing this stream causes connection abort errors on some AS2 servers
 				OutputStream messageOut = conn.getOutputStream();
 
-				//		    Transfer the data 
+				//		    Transfer the data
 				InputStream messageIn = mdn.getData().getInputStream();
 				try {
 					ProfilerStub transferStub = Profiler.startProfile();
@@ -117,7 +117,7 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 					messageIn.close();
 				}
 
-				//		    Check the HTTP Response code 
+				//		    Check the HTTP Response code
                 if ((conn.getResponseCode() != HttpURLConnection.HTTP_OK)
                         && (conn.getResponseCode() != HttpURLConnection.HTTP_CREATED)
                         && (conn.getResponseCode() != HttpURLConnection.HTTP_ACCEPTED)
@@ -133,24 +133,23 @@ public class AsynchMDNSenderModule extends HttpSenderModule{
 				logger.info("sent AsyncMDN [" + disposition.toString()
 						+ "] OK "+msg.getLoggingText());
 
-				//		    log & store mdn into backup folder. 
-				((Session)options.get("session")).getProcessor().handle(StorageModule.DO_STOREMDN,
-						msg, null);
+				//		    log & store mdn into backup folder.
+				getSession().getProcessor().handle(StorageModule.DO_STOREMDN, msg, null);
 
 			} finally {
 				conn.disconnect();
 			}
-		} catch (HttpResponseException hre) { // Resend if the HTTP Response has an error code 
+		} catch (HttpResponseException hre) { // Resend if the HTTP Response has an error code
 			hre.terminate();
 			resend(msg, hre);
-		} catch (IOException ioe) { // Resend if a network error occurs during transmission 
+		} catch (IOException ioe) { // Resend if a network error occurs during transmission
 
 			WrappedException wioe = new WrappedException(ioe);
 			wioe.addSource(OpenAS2Exception.SOURCE_MESSAGE, msg);
 			wioe.terminate();
 
 			resend(msg, wioe);
-		} catch (Exception e) { // Propagate error if it can't be handled by a resend 
+		} catch (Exception e) { // Propagate error if it can't be handled by a resend
 			throw new WrappedException(e);
 		}
 	}
