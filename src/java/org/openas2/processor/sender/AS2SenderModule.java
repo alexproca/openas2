@@ -1,5 +1,7 @@
 package org.openas2.processor.sender;
 
+import java.io.StringWriter;
+import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,10 +41,10 @@ import org.openas2.util.Profiler;
 import org.openas2.util.ProfilerStub;
 
 public class AS2SenderModule extends HttpSenderModule {
-	
+
 	private Log logger = LogFactory.getLog(AS2SenderModule.class.getSimpleName());
 
-	
+
     public boolean canHandle(String action, Message msg, Map options) {
         if (!action.equals(SenderModule.DO_SEND)) {
             return false;
@@ -52,8 +54,8 @@ public class AS2SenderModule extends HttpSenderModule {
     }
 
     public void handle(String action, Message msg, Map options) throws OpenAS2Exception {
-    	
- 
+
+
         logger.info("message submitted"+msg.getLoggingText());
 
         if (!(msg instanceof AS2Message)) {
@@ -62,9 +64,9 @@ public class AS2SenderModule extends HttpSenderModule {
 
         // verify all required information is present for sending
         checkRequired(msg);
-        
+
         int retries = retries (options);
-        
+
         try {
             // encrypt and/or sign the message if needed
             MimeBodyPart securedData = secure(msg);
@@ -82,8 +84,8 @@ public class AS2SenderModule extends HttpSenderModule {
 
 				// Calculate and get the original mic
 				boolean includeHeaders = (msg.getHistory().getItems().size() > 1);
-				
-				
+
+
 				String mic = AS2UtilOld.getCryptoHelper().calculateMIC(
 						msg.getData(), dispOptions.getMicalg(),
 						includeHeaders);
@@ -163,7 +165,7 @@ public class AS2SenderModule extends HttpSenderModule {
 			} finally {
 				conn.disconnect();
 			}
-            
+
         } catch (HttpResponseException hre) { // Resend if the HTTP Response
 												// has an error code
             logger.error("error hre " +hre.getMessage());
@@ -238,20 +240,20 @@ public class AS2SenderModule extends HttpSenderModule {
             String disposition = msg.getMDN().getAttribute(AS2MessageMDN.MDNA_DISPOSITION);
 
             logger.info("received MDN [" + disposition + "]"+msg.getLoggingText());
-            
+
             //Asynch MDN  2007-03-12
-            // Verify if the original mic is equal to the mic in returned MDN 
-            String returnmic = msg.getMDN().getAttribute(AS2MessageMDN.MDNA_MIC); 
-             
+            // Verify if the original mic is equal to the mic in returned MDN
+            String returnmic = msg.getMDN().getAttribute(AS2MessageMDN.MDNA_MIC);
+
             if ( ! returnmic.replaceAll(" ", "").equals(originalmic.replaceAll(" ", ""))) {
-            	//file was sent completely but the returned mic was not matched,  
-            	// don't know it needs or needs not to be resent ? it's depended on what ! 
-            	// anyway, just log the warning message here.  
-            logger.info("mic is not matched, original mic: " + originalmic + " return mic: "+ returnmic+msg.getLoggingText()); 
-            } 
-            else { 
-            logger.info("mic is matched, mic: " + returnmic+msg.getLoggingText()); 
-            } 
+            	//file was sent completely but the returned mic was not matched,
+            	// don't know it needs or needs not to be resent ? it's depended on what !
+            	// anyway, just log the warning message here.
+            logger.info("mic is not matched, original mic: " + originalmic + " return mic: "+ returnmic+msg.getLoggingText());
+            }
+            else {
+            logger.info("mic is matched, mic: " + returnmic+msg.getLoggingText());
+            }
 
             try {
                 new DispositionType(disposition).validate();
@@ -266,7 +268,10 @@ public class AS2SenderModule extends HttpSenderModule {
                 }
             }
         } catch (Exception e) {
-            logger.info(e.toString());
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            e.printStackTrace(pw);
+            logger.info(e.toString() + "\n" + sw.toString());
 
             if (e instanceof IOException) {
                 throw (IOException) e;
@@ -276,7 +281,7 @@ public class AS2SenderModule extends HttpSenderModule {
             throw we;
         }
     }
-    
+
     protected void checkRequired(Message msg) throws InvalidParameterException {
         Partnership partnership = msg.getPartnership();
 
@@ -298,7 +303,7 @@ public class AS2SenderModule extends HttpSenderModule {
         }
     }
 
- 
+
 
     private void resend(Message msg, OpenAS2Exception cause, int tries) throws OpenAS2Exception {
     	if (resend (SenderModule.DO_SEND, msg, cause, tries)) return;
@@ -327,7 +332,7 @@ public class AS2SenderModule extends HttpSenderModule {
                 String digest = partnership.getAttribute(SecurePartnership.PA_SIGN);
 
                 dataBP = AS2UtilOld.getCryptoHelper().sign(dataBP, senderCert, senderKey, digest);
-                
+
                 //Asynch MDN 2007-03-12
                 DataHistoryItem historyItem = new DataHistoryItem(dataBP.getContentType());
                 // *** add one more item to msg history
@@ -437,14 +442,14 @@ public class AS2SenderModule extends HttpSenderModule {
 			msg.setAttribute(FileAttribute.MA_STATUS, FileAttribute.MA_PENDING);
 
 		} catch (Exception e) {
-			
+
 			WrappedException we = new WrappedException(e);
             we.addSource(OpenAS2Exception.SOURCE_MESSAGE, msg);
             throw we;
-  
-			
+
+
 		}
-	} 
-    
+	}
+
 
 }
