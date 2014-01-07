@@ -58,7 +58,7 @@ public class MimeUtil {
         MimeBodyPart part = new MimeBodyPart();
         part.setDataHandler(new DataHandler(new ByteArrayDataSource(data, contentType, null)));
         part.setHeader("Content-Type", contentType);
-        part.setHeader("Content-Transfer-Encoding", "8bit");
+        part.setHeader("Content-Transfer-Encoding", "binary");
 
         return part;
     }
