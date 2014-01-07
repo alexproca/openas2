@@ -35,12 +35,12 @@ public abstract class DirectoryPollingModule extends PollingModule {
     public static final String PARAM_FORMAT = "format";
     public static final String PARAM_DELIMITERS = "delimiters";
     public static final String PARAM_DEFAULTS = "defaults";
-    public static final String PARAM_MIMETYPE = "mimetype";   
+    public static final String PARAM_MIMETYPE = "mimetype";
     private Map trackedFiles;
 
 	private Log logger = LogFactory.getLog(DirectoryPollingModule.class.getSimpleName());
 
-    
+
     public void init(Session session, Map options) throws OpenAS2Exception {
         super.init(session, options);
         getParameter(PARAM_OUTBOX_DIRECTORY, true);
@@ -141,20 +141,20 @@ public abstract class DirectoryPollingModule extends PollingModule {
     }
 
     protected void processFile(File file) throws OpenAS2Exception {
-    	
+
         logger.info("processing " + file.getAbsolutePath());
 
         Message msg = createMessage();
         msg.setAttribute(FileAttribute.MA_FILEPATH, file.getAbsolutePath());
         msg.setAttribute(FileAttribute.MA_FILENAME, file.getName());
-        
-        
+
+
         /*asynch mdn logic 2007-03-12
-          save the file name into message object, 
+          save the file name into message object,
           it will be stored into pending information file
-        */ 
+        */
         msg.setAttribute(FileAttribute.MA_PENDINGFILE, file.getName());
-        
+
         try {
             updateMessage(msg, file);
             logger.info("file assigned to message " + file.getAbsolutePath() + msg.getLoggingText());
@@ -167,10 +167,10 @@ public abstract class DirectoryPollingModule extends PollingModule {
             getSession().getProcessor().handle(SenderModule.DO_SEND, msg, null);
 
                /*asynch mdn logic 2007-03-12
-            	If the return status is pending in msg's attribute "status" then copy 
-            	the transmitted file to pending folder and wait for the receiver to 
+            	If the return status is pending in msg's attribute "status" then copy
+            	the transmitted file to pending folder and wait for the receiver to
             	make another HTTP call to post AsyncMDN
-            	*/ 
+            	*/
             if (msg.getAttribute(FileAttribute.MA_STATUS) != null
 					&& msg.getAttribute(FileAttribute.MA_STATUS).equals(FileAttribute.MA_PENDING)) {
 				File pendingFile = null;
@@ -190,11 +190,11 @@ public abstract class DirectoryPollingModule extends PollingModule {
 									+ pendingFile);
 					se.initCause(iose);
 				}
-			}  
-            
+			}
+
             // If the Sent Directory option is set, move the transmitted file to
 			// the sent directory
-            
+
             if (getParameter(PARAM_SENT_DIRECTORY, false) != null) {
                 File sentFile = null;
 
@@ -223,7 +223,7 @@ public abstract class DirectoryPollingModule extends PollingModule {
             oae.terminate();
             IOUtilOld.handleError(file, getParameter(PARAM_ERROR_DIRECTORY, true));
         }
-        
+
 
     }
 
@@ -268,25 +268,25 @@ public abstract class DirectoryPollingModule extends PollingModule {
             if (encodeType != null)
             	body.setHeader("Content-Transfer-Encoding", encodeType);
             else
-            	body.setHeader("Content-Transfer-Encoding", "8bit"); // default is 8bit
-            
-            
-//          below statement is not filename related, just want to make it  
-//          consist with the parameter "mimetype="application/EDI-X12"" 
-//          defined in config.xml   2007-06-01 
-         
+            	body.setHeader("Content-Transfer-Encoding", "binary");
+
+
+//          below statement is not filename related, just want to make it
+//          consist with the parameter "mimetype="application/EDI-X12""
+//          defined in config.xml   2007-06-01
+
             body.setHeader("Content-Type", contentType);
-            
-//          add below statement will tell the receiver to save the filename 
+
+//          add below statement will tell the receiver to save the filename
 //          as the one sent by sender. 2007-06-01
             String sendFileName = getParameter("sendfilename", false);
             if (sendFileName != null && sendFileName.equals("true")) {
-            	body.setHeader("Content-Disposition", "Attachment; filename=\""+ 
+            	body.setHeader("Content-Disposition", "Attachment; filename=\""+
             	msg.getAttribute(FileAttribute.MA_FILENAME) +"\"");
-            	msg.setContentDisposition("Attachment; filename=\""+ 
+            	msg.setContentDisposition("Attachment; filename=\""+
             	msg.getAttribute(FileAttribute.MA_FILENAME) +"\"");
             }
-          
+
 
             msg.setData(body);
         } catch (MessagingException me) {
