@@ -185,8 +185,6 @@ public abstract class NetModule extends BaseReceiverModule {
                     }
                 }
             }
-
-            System.out.println("exited");
         }
 
 
