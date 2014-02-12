@@ -1,4 +1,4 @@
-(defproject openas2 "2010.8.16-SNAPSHOT"
+(defproject openas2 "2014.02.12"
   :description "lein-ized fork of OpenAS2 Server"
   :url "https://github.com/ea-cm/openas2"
   :license {:name "BSD License"
